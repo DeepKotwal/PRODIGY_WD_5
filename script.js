@@ -1,39 +1,34 @@
-const apiKey = 'YOUR_API_KEY'; // Replace this with your OpenWeatherMap API key
+const apiKey = 'e75ccbde1a63c4fbd38cb80ae63d8043'; // Replace with your OpenWeatherMap API key
 
-// Proxy URL to bypass CORS issues
-const proxyURL = 'https://api.allorigins.win/raw?url=';
-
+// Function to fetch weather data
 async function getWeather() {
-    const location = document.getElementById('location').value;
-    const weatherInfo = document.getElementById('weather-info');
-    weatherInfo.innerHTML = 'Loading...'; // Show a loading message
+  const location = document.getElementById('location').value;
+  if (location === '') {
+    alert('Please enter a location');
+    return;
+  }
 
-    if (!location) {
-        alert('Please enter a city name');
-        return;
+  const weatherInfoDiv = document.getElementById('weather-info');
+  weatherInfoDiv.innerHTML = 'Loading...';
+
+  try {
+    // Fetch weather data from the API
+    const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`);
+    const data = await response.json();
+
+    if (data.cod !== 200) {
+      throw new Error(data.message);
     }
 
-    try {
-        const apiURL = `https://api.openweathermap.org/data/2.5/weather?q=${location}&appid=${apiKey}&units=metric`;
-        const response = await fetch(proxyURL + encodeURIComponent(apiURL));
-        const data = await response.json();
-
-        if (data.cod === '404') {
-            weatherInfo.innerHTML = 'City not found. Please try again.';
-        } else {
-            const { main, weather, wind } = data;
-            const weatherHTML = `
-                <h2>${location}</h2>
-                <p><strong>Temperature:</strong> ${main.temp}°C</p>
-                <p><strong>Weather:</strong> ${weather[0].description}</p>
-                <p><strong>Humidity:</strong> ${main.humidity}%</p>
-                <p><strong>Wind Speed:</strong> ${wind.speed} m/s</p>
-                <img src="https://openweathermap.org/img/wn/${weather[0].icon}.png" alt="weather-icon">
-            `;
-            weatherInfo.innerHTML = weatherHTML;
-        }
-    } catch (error) {
-        weatherInfo.innerHTML = 'Error fetching data. Please try again later.';
-        console.error(error);
-    }
+    // Display weather information
+    weatherInfoDiv.innerHTML = `
+      <div class="weather-detail"><strong>Location:</strong> ${data.name}, ${data.sys.country}</div>
+      <div class="weather-detail"><strong>Temperature:</strong> ${data.main.temp}°C</div>
+      <div class="weather-detail"><strong>Weather:</strong> ${data.weather[0].description}</div>
+      <div class="weather-detail"><strong>Humidity:</strong> ${data.main.humidity}%</div>
+      <div class="weather-detail"><strong>Wind Speed:</strong> ${data.wind.speed} m/s</div>
+    `;
+  } catch (error) {
+    weatherInfoDiv.innerHTML = `<span style="color: red;">Error: ${error.message}</span>`;
+  }
 }
